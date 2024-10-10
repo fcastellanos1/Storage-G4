@@ -1,0 +1,65 @@
+#include "PPSEventAction.hh"
+#include "PPSEventActionMessenger.hh"
+#include "PPSSamplerHit.hh"
+#include "PPSTargetCaloHit.hh"
+#include "PPSOutput.hh"
+
+#include "G4Event.hh"
+
+#include "G4VVisManager.hh"
+#include "G4UnitsTable.hh"
+#include "PPSRunAction.hh"
+#include "G4SDManager.hh"
+
+G4int evtNb;
+extern PPSOutput rootOutput;
+
+PPSEventAction::PPSEventAction(PPSRunAction * ra)
+:printModulo(10000),eventMessenger(0),runAction(ra)
+{
+    eventMessenger = new PPSEventActionMessenger(this);
+}
+
+PPSEventAction::~PPSEventAction()
+{
+    delete eventMessenger;
+    rootOutput.WriteAndClose();
+}
+
+void PPSEventAction::BeginOfEventAction(const G4Event* evt)
+{
+    G4SDManager * SDman = G4SDManager::GetSDMpointer();
+    SamplerCollID = SDman->GetCollectionID("SamplerCollection");
+
+    evtNb = evt->GetEventID();
+    rootOutput.eventNb = evtNb;
+	//printing survey
+    if (evtNb%printModulo == 0) 
+        G4cout << "\n---> Begin of Event: " << evtNb << G4endl;
+}
+
+
+void PPSEventAction::EndOfEventAction(const G4Event* evt)
+{
+    G4int evtNb = evt->GetEventID();	
+    if (evtNb%printModulo == 0)
+        G4cout << ">>> End Event " << evt->GetEventID() << G4endl;
+    
+    if (runAction) runAction->EventFinished(); 
+    
+    G4HCofThisEvent* HCE = evt->GetHCofThisEvent();
+	PPSSamplerHitsCollection*  SampHC=NULL;
+	PPSTargetCaloHitsCollection* TargetCaloHC=NULL;
+    
+    if(SamplerCollID>=0)
+        SampHC = (PPSSamplerHitsCollection*)(HCE->GetHC(SamplerCollID));
+	if(SampHC) rootOutput.WriteDataSampler(SampHC);
+	
+    
+	if(TargetCaloCollID>=0)
+        TargetCaloHC = (PPSTargetCaloHitsCollection*)(HCE->GetHC(TargetCaloCollID));
+
+    if(TargetCaloHC){
+        rootOutput.WriteDataTarget(TargetCaloHC);
+        }
+}

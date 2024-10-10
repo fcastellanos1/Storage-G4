@@ -1,0 +1,148 @@
+#include "PPSPhysicsList.hh"
+#include "PPSPhysicsListMessenger.hh"
+
+#include "PPSPhysListEmStandard.hh"
+#include "PPSPhysListEmPolarized.hh"
+#include "PPSOutput.hh"
+
+#include "G4DecayPhysics.hh"
+#include "G4LossTableManager.hh"
+#include "G4UnitsTable.hh"
+extern PPSOutput rootOutput;
+
+PPSPhysicsList::PPSPhysicsList() 
+: G4VModularPhysicsList(), FlagNuclear(false)
+{
+	G4LossTableManager::Instance();
+	
+	currentDefaultCut   = 1.*mm;//micrometer;//1.*mm;
+	cutForGamma         = currentDefaultCut;
+	cutForElectron      = currentDefaultCut;
+	cutForPositron      = currentDefaultCut;
+	
+	pMessenger = new PPSPhysicsListMessenger(this);
+	
+	SetVerboseLevel(1);
+	
+	emName = "polarized";
+	emPhysicsList = new PPSPhysListEmPolarized();
+	rootOutput.StorePolarisation=true;
+
+	// Deacy physics and all particles
+	fDecPhysicsList = new G4DecayPhysics();
+	
+}
+
+PPSPhysicsList::~PPSPhysicsList()
+{
+	delete pMessenger;
+	delete emPhysicsList;
+	delete fDecPhysicsList;
+}
+
+#include "G4ChargedGeantino.hh"
+#include "G4Geantino.hh"
+void PPSPhysicsList::ConstructParticle()
+{
+	// pseudo-particles
+	G4Geantino::GeantinoDefinition();
+	G4ChargedGeantino::ChargedGeantinoDefinition();
+	fDecPhysicsList->ConstructParticle();
+	
+}
+
+#include "G4EmProcessOptions.hh"
+void PPSPhysicsList::ConstructProcess()
+{
+	// Transportation
+	//
+	AddTransportation();
+	// Electromagnetic physics list
+	emPhysicsList->ConstructProcess();
+	// decay physics list
+	//
+	fDecPhysicsList->ConstructProcess();
+	// step limitation (as a full process)
+	AddStepMax();      
+}
+
+void  PPSPhysicsList::AddPhotoElectroNuclear()
+{
+	SetFlagNuclear();
+}
+
+void PPSPhysicsList::AddPhysicsList(const G4String& name)
+{	
+	if (verboseLevel>0) {
+		G4cout << "PhysicsList::AddPhysicsList: <" << name << ">" << G4endl;
+	}
+	
+	if (name == emName) return;
+	
+	if (name == "standard") {
+		emName = name;
+		delete emPhysicsList;
+		emPhysicsList = new PPSPhysListEmStandard();
+		rootOutput.StorePolarisation=false;
+	} 
+	else
+		if (name == "polarized") {
+			emName = name;
+			delete emPhysicsList;
+			emPhysicsList = new PPSPhysListEmPolarized();
+		} 
+		else {
+			G4cout << "PhysicsList::AddPhysicsList: <" << name << ">"
+			<< " is not defined"
+			<< " Exit now " 
+			<< G4endl;
+			exit(1);
+		}
+}
+
+#include "G4ProcessManager.hh"
+#include "PPSStepMax.hh"
+void PPSPhysicsList::AddStepMax()
+{
+	// Step limitation seen as a process
+	PPSStepMax* stepMaxProcess = new PPSStepMax();
+	
+	theParticleIterator->reset();
+	while ((*theParticleIterator)()){
+		G4ParticleDefinition* particle = theParticleIterator->value();
+		G4ProcessManager* pmanager = particle->GetProcessManager();
+		
+		if (stepMaxProcess->IsApplicable(*particle) && pmanager)
+			pmanager ->AddDiscreteProcess(stepMaxProcess);
+	}
+}
+
+#include "G4Gamma.hh"
+#include "G4Electron.hh"
+#include "G4Positron.hh"
+void PPSPhysicsList::SetCuts()
+{    
+	// set cut values for gamma at first and for e- second and next for e+,
+	// because some processes for e+/e- need cut values for gamma
+	SetCutValue(cutForGamma, "gamma");
+	SetCutValue(cutForElectron, "e-");
+	SetCutValue(cutForPositron, "e+");
+}
+
+void PPSPhysicsList::SetCutForGamma(G4double cut)
+{
+	cutForGamma = cut;
+	SetParticleCuts(cutForGamma, G4Gamma::Gamma());
+}
+
+void PPSPhysicsList::SetCutForElectron(G4double cut)
+{
+	cutForElectron = cut;
+	SetParticleCuts(cutForElectron, G4Electron::Electron());
+}
+
+void PPSPhysicsList::SetCutForPositron(G4double cut)
+{
+	cutForPositron = cut;
+	SetParticleCuts(cutForPositron, G4Positron::Positron());
+}

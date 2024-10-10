@@ -1,0 +1,305 @@
+#include "PPSRunAction.hh"
+
+#include "PPSDetectorConstruction.hh"
+#include "PPSPrimaryGeneratorAction.hh"
+
+#include "G4Run.hh"
+#include "G4RunManager.hh"
+#include "G4UnitsTable.hh"
+#include "G4EmCalculator.hh"
+
+#include "Randomize.hh"
+#include <iomanip>
+#include "PPSOutput.hh"
+#include <vector>
+#include <numeric>
+
+#define max(A,B) ((A>B)? A:B)
+
+extern G4double sum_initial_E;
+extern PPSOutput rootOutput;
+
+PPSRunAction::PPSRunAction(PPSDetectorConstruction* det, PPSPrimaryGeneratorAction* prim)
+: CountKilled(0), detector(det), primary(prim), ProcCounter(0),itstottarget(0.),itstotsampler(0.)
+{
+	totalEventCount=0;
+}
+
+PPSRunAction::~PPSRunAction()   
+{ 
+}
+
+void PPSRunAction::BeginOfRunAction(const G4Run* aRun)
+{  
+	G4cout << "### Run " << aRun->GetRunID() << " start." << G4endl;
+	rootOutput.NbEvents=aRun->GetNumberOfEventToBeProcessed();
+    
+	if (ProcCounter) delete ProcCounter;
+	ProcCounter = new ProcessesCount;
+	totalEventCount = 0;
+	photonStatsSampler.Clear();
+	electronStatsSampler.Clear();
+	positronStatsSampler.Clear();
+	rootOutput.UpdateHistoLimit();
+	
+	for(int i=0;i<6;i++)
+	  for(int j=0;j<10;j++) 
+            for(int k=0;k<10;k++)
+	      rootOutput.EnergyDepoSpheres[i][j][k] = 0.;
+	
+	
+}
+
+void PPSRunAction::FillData(const G4String & particleName,G4bool target_yes,G4double depEnergy, G4double kinEnergy, G4double costheta, 
+							G4double /* phi*/,
+							G4double longitudinalPolarization)
+{
+	if (particleName=="gamma") 
+		photonStatsSampler.FillData(target_yes,depEnergy,kinEnergy, costheta, longitudinalPolarization);
+	else if (particleName=="e-") 
+		electronStatsSampler.FillData(target_yes,depEnergy,kinEnergy, costheta, longitudinalPolarization);
+	else if (particleName=="e+") 
+		positronStatsSampler.FillData(target_yes,depEnergy,kinEnergy, costheta, longitudinalPolarization);
+}
+void PPSRunAction::CountProcesses(G4String procName)
+{
+	// is the process already counted ?
+	// *AS* change to std::map?!
+	size_t nbProc = ProcCounter->size();
+	size_t i = 0;
+	while ((i<nbProc)&&((*ProcCounter)[i]->GetName()!=procName)) i++;
+	if (i == nbProc) ProcCounter->push_back( new OneProcessCount(procName));
+	
+	(*ProcCounter)[i]->Count();
+}
+
+G4int PPSRunAction::NbOfEvents = 0;
+G4String PPSRunAction::Particle ="un_string";
+
+void PPSRunAction::EndOfRunAction(const G4Run* aRun)
+{
+    
+	ofstream fout("run_log.dat");
+	G4cout << "------->>>>>>>   Nb of particles killed     " << CountKilled << G4endl;
+	
+	NbOfEvents = aRun->GetNumberOfEvent();
+	if (NbOfEvents == 0) return;
+	G4ParticleDefinition* particle = primary->GetParticleGun()->GetParticleDefinition();
+	Particle = particle->GetParticleName(); 
+	
+	if(NbOfEvents!=rootOutput.HitSampler0)
+    { 
+		G4cout     << "\n#############" << rootOutput.buffer_datetime << "####################\n"<< G4endl;
+        G4cout     << "\n .........WARNING ........... not all the particles have impinged the target \n"  << G4endl;
+        fout       << "\n#############" << rootOutput.buffer_datetime << "####################\n"<< G4endl;
+        fout       << "\n .........WARNING ........... not all the particles have impinged the target \n"  << G4endl;
+    }
+	else
+	{
+		G4cout     << "\n#############" << rootOutput.buffer_datetime << "####################\n"<< G4endl;
+		G4cout     << "\n				All the particles have impinged the target 			\n"  << G4endl;
+		fout       << "\n#############" << rootOutput.buffer_datetime << "####################\n"<< G4endl;
+		fout	   << "\n				All the particles have impinged the target 			\n"  << G4endl;
+	}
+	
+	RunCaracteristics(cout);
+	RunCaracteristics(fout);
+	
+	G4cout << "\n Process calls frequency --->\n";
+	for (size_t i=0; i< ProcCounter->size();i++) {
+		G4String procName = (*ProcCounter)[i]->GetName();
+		G4int    count    = (*ProcCounter)[i]->GetCounter(); 
+		G4cout << "\t" << procName << " = " << count<<"\n";
+		
+	}
+	
+	if (totalEventCount == 0) return;
+	
+	char temp[256];
+	
+    	sprintf(temp,"Gammas");
+	photonStatsSampler.MeanWriteFile(fout,temp,particle->GetPDGEncoding(),detector->GetTargetThickness(),detector->GetTargetMaterial()->GetName(),totalEventCount);
+	photonStatsSampler.MeanWriteFile(cout,temp,particle->GetPDGEncoding(),detector->GetTargetThickness(),detector->GetTargetMaterial()->GetName(),totalEventCount);
+	
+	sprintf(temp,"Electrons");
+	electronStatsSampler.MeanWriteFile(fout,temp,particle->GetPDGEncoding(),detector->GetTargetThickness(),detector->GetTargetMaterial()->GetName(),totalEventCount);
+	electronStatsSampler.MeanWriteFile(cout,temp,particle->GetPDGEncoding(),detector->GetTargetThickness(),detector->GetTargetMaterial()->GetName(),totalEventCount);
+
+	sprintf(temp,"Positrons");
+	positronStatsSampler.MeanWriteFile(fout,temp,particle->GetPDGEncoding(),detector->GetTargetThickness(),detector->GetTargetMaterial()->GetName(),totalEventCount);
+	positronStatsSampler.MeanWriteFile(cout,temp,particle->GetPDGEncoding(),detector->GetTargetThickness(),detector->GetTargetMaterial()->GetName(),totalEventCount);
+    
+    CLHEP::HepRandom::showEngineStatus();
+    
+    ///////////////
+    G4double tot = 0.;
+    G4double depo_max = -1000.;
+    G4double rms_max=0.;
+    G4int N = aRun->GetNumberOfEvent();
+    G4double tot_energy = 0.;
+    G4int indice_radius=0;
+    G4int indice_z=0;
+   
+    for(int i=0;i<detector->GetSlicesZ();i++)
+    {
+        
+        G4double sum_z=0.;
+       // sum_bin_x.resize(rootOutput.nb_slices[0]);//detector->GetBinPedd());
+        G4double pedd = 0.;
+        G4double Emax = 0.;
+        //sum_bin_x.clear();
+        
+        for(int j=0;j<rootOutput.nb_slices[0];j++)
+        {   
+            std::vector<G4double> vec = rootOutput.GetVectorEnergy()[i][j];
+            int n=vec.size();
+
+            G4double mean_edep = accumulate(vec.begin(), vec.end(),0.);
+            
+            pedd = max(mean_edep,pedd);
+       (rootOutput.GetVectorHistoR())[i]->SetBinContent(j,mean_edep);
+          //  G4cout << j << "  " <<  mean_edep << "  " << n << G4endl;
+#if 0           
+            for (std::vector <G4double>::iterator xi = vec.begin(); xi != vec.end(); ++xi)
+            {
+                G4double const x = *xi;
+            }  
+#endif
+        }
+    }
+    
+    G4double TOT = 0.;
+
+    for(int i=0;i<6;i++)
+        for(int j=0;j<10;j++) 
+            for(int k=0;k<10;k++)
+        {//G4cout << " Layer " << i << " (" << j << ",    " << k << ") "  << rootOutput.EnergyDepoSpheres[i][j][k] << G4endl; 
+            TOT += rootOutput.EnergyDepoSpheres[i][j][k];}
+
+    
+    G4cout << " total dep " << TOT /MeV<< G4endl;
+    
+}
+
+
+void PPSRunAction::RunCaracteristics(ostream &output_type)
+{
+    G4cout.precision(5);
+	output_type  << "----------------------------------------"      << G4endl;
+	output_type  << "Number of particles : " << NbOfEvents << " ( " << (rootOutput.HitSampler0/(double)NbOfEvents)*100. 
+    << "% Hits Sampler 0)\n   "
+    << "Particles Type      : " << Particle   << "\n" 
+    << "Mean energy         : " << (sum_initial_E/NbOfEvents)/MeV   << " MeV " << G4endl;
+	output_type     << "---------------------------------------- "  <<  G4endl;
+    
+	output_type     << "Material            : " << detector->GetTargetMaterial()->GetName()
+    << " (density: "<< G4BestUnit(detector->GetTargetMaterial()->GetDensity(),"Volumic Mass") << ")\n"  
+	<< "Thickness           : " << detector->GetTargetThickness()/mm  << " mm " << "\n"
+	<< "Radius     : " << detector->GetTargetRadius()/mm << " mm " <<"\n"
+	<< "Number of slices Z  : " << detector->GetSlicesZ()<< "\n"
+	<< "Number of slices R : " << detector->GetSlicesR()<<"\n"
+    << "RMS                r: " << rootOutput.rms         << " mm" 
+    << G4endl;	
+	output_type   << "-----------------------------------------"<<G4endl;
+	output_type  << "Total energy deposited in the target	: " << GetEDep() / MeV << " MeV" << G4endl;
+	output_type  << "Total energy crossing Sampler 1		: " << GetSumESampler1() / MeV << " MeV" << G4endl;
+	output_type  << "---------------------------------------- "<<G4endl;
+
+
+
+}
+void PPSRunAction::EventFinished()
+{
+	++totalEventCount;
+	photonStatsSampler.EventFinished();
+	electronStatsSampler.EventFinished();
+	positronStatsSampler.EventFinished();
+}
+
+PPSRunAction::ParticleStatistics::ParticleStatistics()
+: currentNumberSampler(0),currentNumberTarget(0),
+totalNumberSampler(0), totalNumberSampler2(0),
+sumCosTheta(0), sumCosTheta2(0),
+sumDepo(0),sumDepo2(0),
+sumPolarization(0),sumPolarization2(0)
+{}
+
+PPSRunAction::ParticleStatistics::~ParticleStatistics()
+{}
+
+G4int PPSRunAction::ParticleStatistics::GetNpOfParticlesProduced()
+{return totalNumberSampler;}
+
+
+void PPSRunAction::ParticleStatistics::EventFinished()
+{
+	totalNumberSampler+=currentNumberSampler;
+	totalNumberSampler2+=currentNumberSampler*currentNumberSampler;
+	totalNumberTarget+=currentNumberTarget;
+	totalNumberTarget2+=currentNumberTarget*currentNumberTarget;
+	currentNumberSampler=0;
+	currentNumberTarget=0;
+}
+
+void PPSRunAction::ParticleStatistics:: FillData(G4bool target_yes,G4double depEnergy,G4double kinEnergy, 
+												 G4double costheta,
+												 G4double longitudinalPolarization)
+{
+	if(target_yes==0)
+	{
+		++currentNumberSampler;
+		sumEnergy+=kinEnergy;
+		sumEnergy2+=kinEnergy*kinEnergy;
+		sumPolarization+=longitudinalPolarization;
+		sumPolarization2+=longitudinalPolarization*longitudinalPolarization;
+		sumCosTheta+=costheta;
+		sumCosTheta2+=costheta*costheta;
+	}
+	else 
+	{
+		++currentNumberTarget;
+		sumDepo+=depEnergy;
+		sumDepo2+=depEnergy*depEnergy;	
+	}
+}
+
+void PPSRunAction::ParticleStatistics::MeanWriteFile
+(ostream &output_type,char particle_name[256],G4int part,G4double targetlength,G4String matname,G4int totalNumberSamplerOfEvents)
+{
+	output_type << "---------------- " << particle_name << "\n" ;
+	output_type << "Mean Number per Event : " << double(totalNumberSampler/double(totalNumberSamplerOfEvents)) << "\n" ;
+	if (totalNumberSampler!=0) {
+	  G4double energyMean=sumEnergy/totalNumberSampler;
+	  G4double energyRms=std::sqrt(sumEnergy2/totalNumberSampler-energyMean*energyMean);
+	  output_type << "Mean Kinetic Energy : " << energyMean / MeV << " +- " << energyRms / MeV << "\n" ;
+	  G4double polarizationMean=sumPolarization/totalNumberSampler;
+	  G4double polarizationRms=std::sqrt(sumPolarization2/totalNumberSampler-polarizationMean*polarizationMean);
+	  output_type << "Mean Polarization : " << polarizationMean << " +- " <<polarizationRms << "\n";
+	}
+	output_type << "Energy deposited in the target per incident particles : " << (sumDepo /double(totalNumberSamplerOfEvents)) << " MeV " << G4endl;
+}
+
+void PPSRunAction::ParticleStatistics::PrintResults(G4int totalNumberSamplerOfEvents)
+{
+	G4cout<<"Mean Number per Event :" <<G4double(totalNumberSampler)/G4double(totalNumberSamplerOfEvents)<<"\n";
+	
+	if (totalNumberSampler!=0) { 
+	  G4double energyMean=sumEnergy/totalNumberSampler;
+	  G4double energyRms=std::sqrt(sumEnergy2/totalNumberSampler-energyMean*energyMean);
+	  G4cout<<"Mean Energy :"<< energyMean <<" +- "<<energyRms << " MeV " << "\n";
+	  G4double polarizationMean=sumPolarization/totalNumberSampler;
+	  G4double polarizationRms=std::sqrt(sumPolarization2/totalNumberSampler-polarizationMean*polarizationMean);
+	  G4cout<<"Mean Polarization :"<< polarizationMean <<" +- "<<polarizationRms<<"\n";
+	}
+}
+
+void PPSRunAction::ParticleStatistics::Clear()
+{
+	currentNumberTarget=0;
+	currentNumberSampler=0;
+	totalNumberSampler=totalNumberSampler2=0;
+	sumEnergy=sumEnergy2=0;
+	sumDepo=sumDepo2=0;
+	sumPolarization=sumPolarization2=0;
+	sumCosTheta=sumCosTheta2=0;
+}

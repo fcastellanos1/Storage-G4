@@ -1,0 +1,118 @@
+#ifndef PPSOutput_h
+#define PPSOutput_h 1
+#include "G4ios.hh"
+//#include <fstream>
+#include "PPSSamplerHit.hh"
+#include "PPSSamplerSD.hh"
+#include "PPSTargetCaloHit.hh"
+#include "PPSTargetCaloSD.hh"
+#include "PPSDetectorConstruction.hh"
+
+#include "TROOT.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TNtuple.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TGraph.h"
+
+using namespace std;
+class PPSOutputMessenger;
+class PPSOutput
+{
+	public:
+		PPSOutput();
+		~PPSOutput();
+		void WriteAndClose();
+		void Header();
+		void WriteDataSampler(PPSSamplerHitsCollection*);
+		G4String SampName;
+
+		G4int 			nb_slices[2];
+		G4double 		dim_target[2]; 
+		G4String 		Mat;
+		G4int 			NbEvents;
+		G4int 			ParticleID;
+		G4int 			HitSampler0;
+		G4double 		rms;
+		G4bool 			cluster_bool;
+		G4bool 			StoreNoneEMParticles;
+		G4bool 			StorePolarisation;
+		G4double 		startZ;
+		G4double 		AMDlength;
+		G4double 		AMDalpha;
+		G4double 		AMDB0;
+		G4double        	AMDradius_max;
+		G4double        	AMDradius_min;
+		G4double 		TotalLength;
+		G4int nb_slices_pedd;
+	private:
+		PPSOutputMessenger* outputMessenger;
+		ofstream ofsampler_mean;
+		ofstream oftarget;
+		PPSDetectorConstruction* detector;
+		Char_t the_text_header[1024];
+
+		typedef std::vector<G4double> vectorOneD;
+		typedef std::vector<vectorOneD> vectorTwoD;
+        typedef std::vector<vectorTwoD>   vectorThreeD;
+    
+        int itsi,itsj;
+    
+    public:
+	vectorThreeD vectorEnergy;
+    vectorTwoD edep_per_event_rz;
+    vectorTwoD edep_per_event_xz;
+    vectorTwoD edep2_per_event_xz;
+    
+   vectorThreeD EnergyDepoSpheres;
+        
+	
+
+	public:
+		TTree*                  sTree;	
+		TTree*                  Energy2DTree;
+		TTree*                  GetEnergy2DTree()				{return Energy2DTree;}
+
+		void                    SetVectorEnergy(int i, int j,G4double itsE);
+		vectorThreeD            GetVectorEnergy()				{return vectorEnergy;}
+		
+		void WriteDataTarget(PPSTargetCaloHitsCollection*);
+		void Init();
+		void UpdateHistoLimit();
+		void UpdateHistoLimitPEDD(G4int n,G4double MAX);
+
+		char buffer_datetime[256];
+		//for peddhisto 1D
+		void initializePerEvent();
+		G4int eventNb;
+
+	    void SetEnergyLossHisto2D(int i, int j,G4double itsE);
+        
+        vector <TH1F*> GetVectorHistoX(){return histo_x;}
+        vector <TH1F*> GetVectorHistoR(){return histo_r;}
+       
+    private:
+		TFile*   	rootFile;
+		TTree*   	SamplerTree;
+		TH1F*		EnergyLossHisto_long;
+		TH1F*		EnergyLossHisto_trans;
+            
+	        vector <TH1F*> histo_x;
+	        vector <TH1F*> histo_r;
+    
+		G4int    	format;
+		TObjString 	header;
+		TObject     	obj;
+		Char_t 		Matos[256];
+
+		Int_t pdg,track_id;
+		Double_t x,y,z,px,py,pz,E,sx,sy,sz,z0,E0,r0,t;
+
+};
+inline void PPSOutput::SetVectorEnergy(int i, int j,G4double itsE) 
+{itsi=i;itsj=j;vectorEnergy[itsi][itsj].push_back(itsE);}
+
+#endif
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

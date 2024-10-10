@@ -1,0 +1,50 @@
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+/* 
+ PPSIM code.   
+ dadoun@lal.in2p3.fr 
+ */
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//
+//
+// $Id: PhysListEmPolarized.hh,v 1.1 2006/10/02 16:25:55 vnivanch Exp $
+// GEANT4 tag $Name: geant4-08-02-patch-01-ref $
+//
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+#ifndef PPSPhysListEmPolarized_h
+#define PPSPhysListEmPolarized_h 1
+
+#include "G4VPhysicsConstructor.hh"
+#include "globals.hh"
+
+
+class PPSPhysListEmPolarized : public G4VPhysicsConstructor
+{
+  public: 
+    PPSPhysListEmPolarized(const G4String& name = "polarized");
+   ~PPSPhysListEmPolarized();
+
+  public: 
+    // This method is dummy for physics
+    void ConstructParticle() {};
+ 
+    // This method will be invoked in the Construct() method.
+    // each physics process will be instantiated and
+    // registered to the process manager of each particle type 
+    void ConstructProcess();
+};
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+#endif
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+
+
+
+
