@@ -17,6 +17,7 @@ PPSPrimaryGeneratorMessenger::PPSPrimaryGeneratorMessenger(PPSPrimaryGeneratorAc
 	outputCmd = new G4UIcmdWithAString("/ppsimui/gun/output",this);
 	outputCmd->SetGuidance("Set the name of the output root file");
 	outputCmd->SetParameterName("filename",false);
+	outputCmd->SetDefaultValue("tuple.root");
 	outputCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 	
 	EnergyCmd = new G4UIcmdWithADoubleAndUnit("/ppsimui/gun/energy",this);

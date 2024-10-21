@@ -17,22 +17,28 @@ class PPSInputMessenger;
 
 class PPSInput
 {
-  public:
-    PPSInput();
-   ~PPSInput();
-    void GetNextParticle(G4double& x0 , G4double& y0 , G4double& z0 ,
-						 G4double& px0, G4double& py0, G4double& zp0,
-						 G4double& Sx0, G4double& Sy0, G4double& Sz0);
-  private:
-	ifstream input_file;
-	G4String itsName;
-    G4bool pola_file;
+public:
+  PPSInput();
+  ~PPSInput();
+  void GetNextParticle(G4double& x0 , G4double& y0 , G4double& z0 ,
+		       G4double& px0, G4double& py0, G4double& zp0,
+		       G4double& Sx0, G4double& Sy0, G4double& Sz0);
+private:
+  ifstream input_file;
+  G4String itsName;
+  G4bool pola_file;
   G4double Eg,xpos,ypos,zpos,xp,yp;
   G4int ntupleId;
-  public:
+  G4bool is_txt = 0;
+  G4bool is_root = 0;
+public:
   void SetInputBunch(G4String NameFile);
-	PPSInputMessenger* inputMessenger;
-	G4String GetInputName(){return itsName;}
+  void SetInputTxt(G4String NameFile);
+  void SetInputRoot(G4String NameFile);
+  G4bool IsTxt();
+  G4bool IsRoot();
+  PPSInputMessenger* inputMessenger;
+  G4String GetInputName(){return itsName;}
   
 };
 

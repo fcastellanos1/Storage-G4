@@ -21,6 +21,48 @@ PPSInput::~PPSInput()
 
 void PPSInput::SetInputBunch(G4String NameFile)
 {
+  // Three cases of input: txt, root, anything else
+  G4String extension;
+  G4bool match_txt = 0, match_root = 0;
+
+  // Txt input
+  extension = ".txt";
+  // Verifies size is enough
+  if (NameFile.size() >= extension.size()) {
+    // Compares last characters with extension
+    match_txt = (NameFile.compare(NameFile.size() - extension.size(), extension.size(), extension) == 0);
+    if (match_txt){ SetInputTxt(NameFile);  }
+  }
+  
+  // Root input
+  extension = ".root";
+  // Verifies size is enough
+  if (NameFile.size() >= extension.size()) {
+    // Compares last characters with extension
+    match_root = (NameFile.compare(NameFile.size() - extension.size(), extension.size(), extension) == 0);
+    if (match_root){ SetInputRoot(NameFile); }
+  }
+ 
+  // No input
+  if (!match_root && !match_txt) {
+    G4cerr << "Error from PPSInput: Extension not recognizable. Exiting\n";
+    exit(1);
+  }
+}
+
+void PPSInput::SetInputTxt(G4String NameFile)
+{
+  itsName = NameFile;
+  input_file.open(NameFile);
+  
+  if(!input_file.good()){ G4cerr<<"Error from PPSInput: Cannot open input txt file "<< itsName <<G4endl; exit(1);}
+
+  is_txt = 1;
+}
+
+// this was the original function before
+void PPSInput::SetInputRoot(G4String NameFile)
+{
   
   // Create (or get) analysis reader
   auto analysisReader = G4AnalysisReader::Instance();
@@ -36,53 +78,49 @@ void PPSInput::SetInputBunch(G4String NameFile)
   }
   else {
     itsName=NameFile;
+    is_root = 1;
     analysisReader->SetNtupleDColumn("Eg", Eg);
     analysisReader->SetNtupleDColumn("xpos", xpos);
     analysisReader->SetNtupleDColumn("ypos", ypos);
     analysisReader->SetNtupleDColumn("zpos", zpos);
     analysisReader->SetNtupleDColumn("xgp", xp);
     analysisReader->SetNtupleDColumn("ygp", yp);
-  }
-  
-  /*itsName = NameFile;
-  G4String real_name_file;
-  //Due to "/" pb POLA_ can not be found so I made this trick
-  size_t found=itsName.find_last_of("/\\");
-  real_name_file=itsName.substr(found+1);
-  G4cout << itsName << " " << real_name_file << G4endl;
-  input_file.open(itsName);
-  if(!real_name_file.find("POLA_"))
-    { 
-      G4cout << "Input file polarized" << G4endl;
-      pola_file = true;
-    }
-  else G4cout <<  " Input file not polarized"<< G4endl; 
-  
-  if(!input_file.good()){ G4cerr<<"Cannot open bunch file "<< itsName <<G4endl; exit(1);}*/
-  
+  }  
   
 }
+
 
 void PPSInput::GetNextParticle(G4double& x0 , G4double& y0 ,  G4double& z0 ,
 			       G4double& px0, G4double& py0, G4double& pz0,
 			       G4double& Sx0, G4double& Sy0, G4double& Sz0)
 {
-  
-  auto analysisReader = G4AnalysisReader::Instance();
-  
-  if ( analysisReader->GetNtupleRow(ntupleId) ) {
-     // G4cout << "th entry: "
-     //        << "  Eg: " << Eg << G4endl;
-    
-    x0=xpos;
-    y0=ypos;
-    z0=zpos;
-    pz0=Eg;
-    px0=xp*pz0;
-    py0=yp*pz0;
-    Sx0 = Sy0 = Sz0 = 0.;
+  if (IsRoot()){
+    auto analysisReader = G4AnalysisReader::Instance();  
+    if ( analysisReader->GetNtupleRow(ntupleId) ) {
+      // G4cout << "th entry: "
+      //        << "  Eg: " << Eg << G4endl;
+      
+      x0=xpos;
+      y0=ypos;
+      z0=zpos;
+      pz0=Eg;
+      px0=xp*pz0;
+      py0=yp*pz0;
+      Sx0 = Sy0 = Sz0 = 0.;
+    }
   }
-  
+
+  if (IsTxt()){
+    input_file >> x0 >> y0 >> px0>> py0 >> pz0; //[mm], [N/A]
+    z0 = 0.;
+    Sx0 = Sy0 = Sz0 = 0.;
+    // Units are in Primary Generator
+    // Keep in mind txt has 18m already traveled: CHANGE PPsim.in !!!
+    
+    //particleGun->SetParticlePosition(G4ThreeVector(srxx*mm,sryy*mm,0*m));
+    //particleGun->SetParticleMomentumDirection(G4ThreeVector(srpxx,srpyy,std::sqrt(1-srpxx*srpxx-srpyy*srpyy)));
+    //particleGun->SetParticleEnergy(srpzz*GeV);
+  }
   
 /*#define _READ(value) input_file>>value
   
@@ -108,3 +146,9 @@ void PPSInput::GetNextParticle(G4double& x0 , G4double& y0 ,  G4double& z0 ,
 		}
 	}*/
 }		  
+
+ G4bool PPSInput::IsTxt()
+ {return is_txt;}
+
+ G4bool PPSInput::IsRoot()
+ {return is_root;}

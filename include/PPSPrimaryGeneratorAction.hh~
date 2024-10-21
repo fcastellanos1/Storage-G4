@@ -25,6 +25,8 @@ class PPSPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 	G4ParticleGun* GetParticleGun() {return particleGun;};
     void SetPrimaryEnergy(G4double E);
     G4double GetPrimaryEnergy();
+  void SetOutputFilename(G4String filename);
+  G4String GetOutputFilename();
   	void SetPrimaryPolarization(G4ThreeVector POL);
 	G4ThreeVector GetPrimaryPolarization();
     void SetRndmFlag(G4String val) { rndmFlag = val;}
@@ -45,8 +47,14 @@ class PPSPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 	G4ThreeVector itsPOL;
 	G4bool rndmFlag;
 	G4bool itsbatch;
-	
+	G4String outputName = "tuple.root";
 };
+
+inline void PPSPrimaryGeneratorAction::SetOutputFilename(G4String filename)
+{outputName = filename;}
+
+inline G4String PPSPrimaryGeneratorAction::GetOutputFilename()
+{return outputName;}
 
 inline void PPSPrimaryGeneratorAction::SetPrimaryEnergy(G4double E)
 {itsE = E;}
