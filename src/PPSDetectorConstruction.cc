@@ -95,7 +95,7 @@ G4VPhysicalVolume* PPSDetectorConstruction::Construct()
   // Sampler0
   //
   G4SDManager* SDman = G4SDManager::GetSDMpointer();
-  SamplerSensDet = new PPSSamplerSD("PPSSamplerSD");
+  PPSSamplerSD* SamplerSensDet = new PPSSamplerSD("PPSSamplerSD");
   SDman->AddNewDetector(SamplerSensDet);
   //
   G4VisAttributes* LogVisAttSampler= new G4VisAttributes(G4Colour(1.0,1.0,0.));
@@ -183,6 +183,28 @@ G4VPhysicalVolume* PPSDetectorConstruction::Construct()
   logicSampler1->SetSensitiveDetector(SamplerSensDet);
   // Update position in z
   current_position += samplerLength;
+  
+  //
+  // Silicon Detector
+  //
+  PPSSiliconDetector* siliconDetector = new PPSSiliconDetector("PPSSiliconDetector");
+  SDman->AddNewDetector(siliconDetector);
+  //
+  G4double siThick = 0.02*mm, siSize = targetSize;
+  G4ThreeVector posSiDet= G4ThreeVector(0,0,current_position+2*mm+siThick/2.);
+  G4Box* solidSiDet = new G4Box("SiDet", siSize/2.,siSize/2.,siThick/2.);
+  G4Material* Silicon = G4NistManager::Instance()->FindOrBuildMaterial((G4String)"G4_Si");
+  G4LogicalVolume* logicSiDet = new G4LogicalVolume(solidSiDet,Silicon,"SiDet");
+  G4VPhysicalVolume* pSiDet = new G4PVPlacement(0,posSiDet,logicSiDet,"SiDet",lWorld,false,0);
+  // Visual attributes
+  G4VisAttributes* logVisAttSiDet = new G4VisAttributes(G4Colour(0.6,0.6,0.6, 1.0));
+  logVisAttSiDet->SetForceSolid(true);
+  logicSiDet->SetVisAttributes(logVisAttSiDet);
+  logicSiDet->SetSensitiveDetector(siliconDetector);
+  // Update position in z
+  current_position += siThick;
+  
+  
   
   PrintParameters();
   //always return the root volume	

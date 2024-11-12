@@ -50,8 +50,16 @@ void PPSEventAction::EndOfEventAction(const G4Event* evt)
     
   //G4cout << " SamplerCollID " << SamplerCollID << " for event " << evtNb << G4endl;
   
+  // Remember where SamplerCollID comes from (BeginOfEventAction):
+  //SamplerCollID = SDman->GetCollectionID("SamplerCollection");
   if(SamplerCollID>=0) {
-    hc = (PPSSamplerHitsCollection*)(HCE->GetHC(SamplerCollID));
+    G4SDManager * SDman = G4SDManager::GetSDMpointer();
+    G4int SiliconCollID = SDman->GetCollectionID("SiliconDetectorHC");
+    G4int samplerIDs[2] = {SamplerCollID, SiliconCollID};
+    
+    for (int id = 0; id<2; id++){
+      //hc = (PPSSamplerHitsCollection*)(HCE->GetHC(SamplerCollID));
+      hc = (PPSSamplerHitsCollection*)(HCE->GetHC(samplerIDs[id]));
     
     //G4cout << " hc " << hc << " for event " << evtNb << G4endl;
     
@@ -67,6 +75,8 @@ void PPSEventAction::EndOfEventAction(const G4Event* evt)
           analysisManager->FillNtupleIColumn(10, 0);
         else if((*hc)[i]->GetName()=="Sampler1")
           analysisManager->FillNtupleIColumn(10, 1);
+	else if((*hc)[i]->GetName()=="SiDet")
+          analysisManager->FillNtupleIColumn(10, 2);
         else
           analysisManager->FillNtupleIColumn(10, 999);
             
@@ -90,6 +100,7 @@ void PPSEventAction::EndOfEventAction(const G4Event* evt)
         analysisManager->AddNtupleRow();
         //G4cout << " added row for event " << evtNb << G4endl;
       }
+    }
     }
   }
     

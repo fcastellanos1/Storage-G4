@@ -50,7 +50,7 @@ int main(int argc,char** argv) {
   G4PhysListFactory plFactory;
   G4VModularPhysicsList *pl = plFactory.GetReferencePhysList( plName );
   // Default Cut value = 0.7mm
-  G4double cutValue = 0.1 * CLHEP::mm;
+  G4double cutValue = 1.0 * CLHEP::um;
   pl->SetDefaultCutValue(cutValue);
   // Cuidado porque deben estar comentados los cortes en el PPsim.in
   runManager->SetUserInitialization( pl );

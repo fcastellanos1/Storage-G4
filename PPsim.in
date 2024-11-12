@@ -29,14 +29,14 @@
 
 # input : choose one of the two types
 # 1:
-/ppsimui/inputbunch inputPlus.root
-/ppsimui/gun/output tuple_plus.root
+/ppsimui/inputbunch inputPlusGuangyi.txt
+/ppsimui/gun/output tuple_plus_Guangyi.root
 # 2:
 ## transverse RMS size of the beam in mm:
 #/ppsimui/gun/setGaussRMS 2.5
 #/ppsimui/gun/energy 100.0 MeV
 
 # number of photons (8.300.000 max in .root files, 100.000.000 in .txt files)
-/run/beamOn 1300000
-#/run/beamOn 100000000
+#/run/beamOn 1
+/run/beamOn 100000000
 #/run/beamOn 8300000

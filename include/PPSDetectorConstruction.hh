@@ -3,6 +3,7 @@
 
 //local includes
 #include "PPSSamplerSD.hh"
+#include "PPSSiliconDetector.hh"
 #include "PPSTargetCaloSD.hh"
 
 // G4 includes
@@ -21,6 +22,7 @@ class G4UserLimits;
 class PPSDetectorMessenger;
 class PPSCapture;
 class PPSSamplerSD;
+class PPSSiliconDetector;
 class PPSTargetCaloSD;
 
 class PPSDetectorConstruction : public G4VUserDetectorConstruction
@@ -56,10 +58,10 @@ class PPSDetectorConstruction : public G4VUserDetectorConstruction
 		const G4VPhysicalVolume* GetSampler0()    	{return pSampler0;}
 
 	private:
-		PPSSamplerSD*           SamplerSensDet;
+  		//PPSSamplerSD*           SamplerSensDet;
+		//PPSSiliconDetector*   siliconDetector;
 		G4VPhysicalVolume*      pSampler0;
 		G4VPhysicalVolume*      pSampler1;
-
 
 		//Target
 	public: 
