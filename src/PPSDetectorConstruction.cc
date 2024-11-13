@@ -185,17 +185,17 @@ G4VPhysicalVolume* PPSDetectorConstruction::Construct()
   current_position += samplerLength;
   
   //
-  // Silicon Detector
+  // Silicon Detector 1
   //
   PPSSiliconDetector* siliconDetector = new PPSSiliconDetector("PPSSiliconDetector");
   SDman->AddNewDetector(siliconDetector);
   //
   G4double siThick = 0.02*mm, siSize = targetSize;
-  G4ThreeVector posSiDet= G4ThreeVector(0,0,current_position+2*mm+siThick/2.);
+  G4ThreeVector posSiDet= G4ThreeVector(0,0,current_position+siThick/2.);
   G4Box* solidSiDet = new G4Box("SiDet", siSize/2.,siSize/2.,siThick/2.);
   G4Material* Silicon = G4NistManager::Instance()->FindOrBuildMaterial((G4String)"G4_Si");
-  G4LogicalVolume* logicSiDet = new G4LogicalVolume(solidSiDet,Silicon,"SiDet");
-  G4VPhysicalVolume* pSiDet = new G4PVPlacement(0,posSiDet,logicSiDet,"SiDet",lWorld,false,0);
+  G4LogicalVolume* logicSiDet = new G4LogicalVolume(solidSiDet,Silicon,"SiDet1");
+  G4VPhysicalVolume* pSiDet = new G4PVPlacement(0,posSiDet,logicSiDet,"SiDet1",lWorld,false,0);
   // Visual attributes
   G4VisAttributes* logVisAttSiDet = new G4VisAttributes(G4Colour(0.6,0.6,0.6, 1.0));
   logVisAttSiDet->SetForceSolid(true);
@@ -203,6 +203,31 @@ G4VPhysicalVolume* PPSDetectorConstruction::Construct()
   logicSiDet->SetSensitiveDetector(siliconDetector);
   // Update position in z
   current_position += siThick;
+  
+  //
+  // Silicon Detector 2
+  //
+  G4double gap = 1*mm;
+  G4ThreeVector posSiDet2= G4ThreeVector(0,0,current_position+gap+siThick/2.);
+  G4LogicalVolume* logicSiDet2 = new G4LogicalVolume(solidSiDet,Silicon,"SiDet2");
+  G4VPhysicalVolume* pSiDet2 = new G4PVPlacement(0,posSiDet2,logicSiDet2,"SiDet2",lWorld,false,0);
+  // Visual attributes
+  logicSiDet2->SetVisAttributes(logVisAttSiDet);
+  logicSiDet2->SetSensitiveDetector(siliconDetector);
+  // Update position in z
+  current_position += siThick+gap;
+
+  //
+  // Silicon Detector 3
+  //
+  G4ThreeVector posSiDet3= G4ThreeVector(0,0,current_position+gap+siThick/2.);
+  G4LogicalVolume* logicSiDet3 = new G4LogicalVolume(solidSiDet,Silicon,"SiDet3");
+  G4VPhysicalVolume* pSiDet3 = new G4PVPlacement(0,posSiDet3,logicSiDet3,"SiDet3",lWorld,false,0);
+  // Visual attributes
+  logicSiDet3->SetVisAttributes(logVisAttSiDet);
+  logicSiDet3->SetSensitiveDetector(siliconDetector);
+  // Update position in z
+  current_position += siThick+gap;
   
   
   

@@ -75,8 +75,12 @@ void PPSEventAction::EndOfEventAction(const G4Event* evt)
           analysisManager->FillNtupleIColumn(10, 0);
         else if((*hc)[i]->GetName()=="Sampler1")
           analysisManager->FillNtupleIColumn(10, 1);
-	else if((*hc)[i]->GetName()=="SiDet")
+	else if((*hc)[i]->GetName()=="SiDet1")
           analysisManager->FillNtupleIColumn(10, 2);
+	else if((*hc)[i]->GetName()=="SiDet2")
+          analysisManager->FillNtupleIColumn(10, 3);
+	else if((*hc)[i]->GetName()=="SiDet3")
+          analysisManager->FillNtupleIColumn(10, 4);
         else
           analysisManager->FillNtupleIColumn(10, 999);
             
