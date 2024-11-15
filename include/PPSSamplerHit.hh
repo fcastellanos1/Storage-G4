@@ -14,7 +14,7 @@ public:
     PPSSamplerHit(G4String aName,G4double z0,G4double y0,G4double x0,
                   G4double energy,G4double x, G4double y, G4double z,
                   G4double px, G4double py, G4double pz,G4int pdg,G4double Sx,
-                  G4double Sy,G4double Sz,G4int trackID,G4double time);
+                  G4double Sy,G4double Sz,G4int trackID,G4double time, G4double Edep=0.);
     
     ~PPSSamplerHit();
     PPSSamplerHit(const PPSSamplerHit&);
@@ -42,6 +42,7 @@ private:
     G4double itsSz;
     G4int    itsTrackID;
     G4double itsTime;
+    G4double itsEdep;
     
 public:
     inline void SetName(G4String aName)
@@ -81,6 +82,8 @@ public:
     {return itsTrackID;}
     inline G4double GetTime() const
     {return itsTime;}
+    inline G4double GetEdep() const
+    {return itsEdep;}
 };
 
 typedef G4THitsCollection<PPSSamplerHit> PPSSamplerHitsCollection;

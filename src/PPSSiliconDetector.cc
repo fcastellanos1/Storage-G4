@@ -40,7 +40,8 @@ G4bool PPSSiliconDetector::ProcessHits(G4Step* aStep,G4TouchableHistory*)
       G4ThreeVector pos_i		 =	preStep->GetPosition();
       G4ThreeVector pos_f        =  postStep->GetPosition();
       G4ThreeVector momDir       =	theTrack->GetMomentumDirection();
-      G4double energy	         =	aStep->GetTotalEnergyDeposit();
+      G4double energy            =	theTrack->GetTotalEnergy();
+      G4double energydep         =	aStep->GetTotalEnergyDeposit();
 
       G4double x			     =	pos_f.x();
       G4double y			     =	pos_f.y();
@@ -62,7 +63,7 @@ G4bool PPSSiliconDetector::ProcessHits(G4Step* aStep,G4TouchableHistory*)
       G4double polY			= 	theTrack->GetPolarization().y();
       G4double polZ			= 	theTrack->GetPolarization().z();
 	  
-      PPSSamplerHit* newHit = new PPSSamplerHit(sampname,x0,y0,z0,energy,x,y,z,px,py,pz,pdg,polX,polY,polZ,trackID,time);
+      PPSSamplerHit* newHit = new PPSSamplerHit(sampname,x0,y0,z0,energy,x,y,z,px,py,pz,pdg,polX,polY,polZ,trackID,time,energydep);
       PPSSamplerCollection->insert( newHit );
 	  
       if(theTrack->GetVolume()!=theTrack->GetNextVolume()) StoreHit=true;

@@ -29,8 +29,8 @@
 
 # input : choose one of the two types
 # 1:
-/ppsimui/inputbunch inputMinus.root
-/ppsimui/gun/output tuple_minus.root
+/ppsimui/inputbunch inputPlus.root
+/ppsimui/gun/output tuple_plus.root
 # 2:
 ## transverse RMS size of the beam in mm:
 #/ppsimui/gun/setGaussRMS 2.5

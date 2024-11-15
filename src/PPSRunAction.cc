@@ -56,6 +56,7 @@ PPSRunAction::PPSRunAction(PPSDetectorConstruction* det, PPSPrimaryGeneratorActi
   analysisManager->CreateNtupleDColumn("y0"); //12
   analysisManager->CreateNtupleDColumn("z0"); //13
   analysisManager->CreateNtupleDColumn("t"); //14
+  analysisManager->CreateNtupleDColumn("Edep"); //15
   
   analysisManager->FinishNtuple();
 }

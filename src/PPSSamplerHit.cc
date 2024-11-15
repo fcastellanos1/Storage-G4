@@ -16,11 +16,11 @@ PPSSamplerHit::PPSSamplerHit() {
 PPSSamplerHit::PPSSamplerHit(G4String aName,G4double x0,G4double y0,G4double z0,
 			     G4double energy,G4double x,G4double y, G4double z,
 			     G4double px, G4double py, G4double pz, G4int pdg,
-			     G4double Sx,G4double Sy,G4double Sz,G4int trackID,G4double time)
+			     G4double Sx,G4double Sy,G4double Sz,G4int trackID,G4double time, G4double Edep)
   :itsName(aName),itsZ0(z0),itsY0(y0),itsX0(x0),
    itsEnergy(energy),itsX(x),itsY(y),itsZ(z),
    itsPX(px),itsPY(py),itsPZ(pz),itsPDG(pdg),
-   itsSx(Sx),itsSy(Sy),itsSz(Sz),itsTrackID(trackID),itsTime(time) {
+   itsSx(Sx),itsSy(Sy),itsSz(Sz),itsTrackID(trackID),itsTime(time),itsEdep(Edep){
 }
 
 PPSSamplerHit::~PPSSamplerHit() {

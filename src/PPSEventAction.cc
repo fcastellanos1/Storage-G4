@@ -97,6 +97,7 @@ void PPSEventAction::EndOfEventAction(const G4Event* evt)
         analysisManager->FillNtupleDColumn(12,(*hc)[i]->GetY0()/mm);
         analysisManager->FillNtupleDColumn(13,(*hc)[i]->GetZ0()/mm);
         analysisManager->FillNtupleDColumn(14,(*hc)[i]->GetTime()/nanosecond);
+        analysisManager->FillNtupleDColumn(15,(*hc)[i]->GetEdep()/MeV);
         //sx=(*hc)[i]->GetSx();
         //sy=(*hc)[i]->GetSy();
         //sz=(*hc)[i]->GetSz();
