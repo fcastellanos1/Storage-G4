@@ -34,14 +34,15 @@ G4bool PPSSiliconDetector::ProcessHits(G4Step* aStep,G4TouchableHistory*)
   G4StepPoint* preStep      =   aStep->GetPreStepPoint();
   G4StepPoint* postStep     =   aStep->GetPostStepPoint();
   G4double theCharge = theTrack->GetDefinition()->GetPDGCharge();
-
-  if( (StoreHit) )// && (theCharge) ) if you only want e+/e-
+  G4double energydep = aStep->GetTotalEnergyDeposit();
+  
+  if( (StoreHit) && (energydep) )// && (theCharge) ) if you only want e+/e-
     {
       G4ThreeVector pos_i		 =	preStep->GetPosition();
       G4ThreeVector pos_f        =  postStep->GetPosition();
       G4ThreeVector momDir       =	theTrack->GetMomentumDirection();
       G4double energy            =	theTrack->GetTotalEnergy();
-      G4double energydep         =	aStep->GetTotalEnergyDeposit();
+      //G4double energydep         =	aStep->GetTotalEnergyDeposit();
 
       G4double x			     =	pos_f.x();
       G4double y			     =	pos_f.y();
